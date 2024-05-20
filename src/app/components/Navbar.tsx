@@ -12,17 +12,14 @@ export default function Navbar({ session }) {
   const [show, setShow] = useState<boolean>(false);
   const { data } = useFetchDataFromDbQuery();
   const dispatch = useAppDispatch();
-  console.log(data, "dtatafromDb");
   useEffect(() => {
     if (data) {
       const activeBoard = data[0].boards[0];
-      console.log(activeBoard, "activeboard");
       dispatch(setCurrentBoardName(activeBoard.name));
     }
   }, [data, dispatch]);
 
   const currentBoardName = useAppSelector(getCurrentBoardName);
-  console.log(currentBoardName, "nameeee");
   return (
     <nav className="bg-white border flex h-24">
       <div className="flex-none w-[18.75rem] border-r-2 flex items-center pl-[2.12rem]">

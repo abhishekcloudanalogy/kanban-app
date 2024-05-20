@@ -20,7 +20,6 @@ export const fireStoreApi = createApi({
           const { user } = session!;
           const ref = collection(db, `users/${user?.email}/tasks`);
           const querySnapshot = await getDocs(ref);
-          console.log(querySnapshot.docs.map((doc) => doc.data()),"snapshot")
           return { data: querySnapshot.docs.map((doc) => doc.data()) };
           // Data must be returned in this format when using queryFn
         } catch (e) {

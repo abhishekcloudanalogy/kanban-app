@@ -15,7 +15,6 @@ const Signin = (props: Props) => {
       redirect: true,
       callbackUrl: "/",
     });
-    console.log(res, "result");
   };
   const router = useRouter();
   return (

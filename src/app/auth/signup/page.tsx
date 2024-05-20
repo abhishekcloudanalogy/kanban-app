@@ -13,7 +13,6 @@ const Signin = (props: Props) => {
   const signup = () => {
     createUserWithEmailAndPassword(auth, userInfo.email, userInfo.password);
   };
-  console.log(userInfo)
   return (
     <>
       <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">

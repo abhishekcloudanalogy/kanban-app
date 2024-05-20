@@ -24,7 +24,6 @@ export const { setCurrentBoardName } = featuresSlice.actions;
 
 // Selector function to retrieve the current board name from the state
 export const getCurrentBoardName = (state: RootState) => {
-  console.log(state,"state")
   return state.features.currentBoardName;
 };
 
