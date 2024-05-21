@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useFetchDataFromDbQuery } from "../../redux/services/apiSlice";
-import { useAppSelector } from "../../redux/hooks";
-import { getCurrentBoardName } from "../../redux/features/appSlice";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { getCurrentBoardName, openAddAndEditBoardModal } from "../../redux/features/appSlice";
 import { MdEdit, MdDelete } from "react-icons/md";
 
 interface ITask {
@@ -19,6 +19,7 @@ export default function BoardTasks() {
   const { isLoading, data } = useFetchDataFromDbQuery();
   const [columns, setColumns] = useState<Column[]>([]);
   const activeBoard = useAppSelector(getCurrentBoardName);
+  const dispatch = useAppDispatch();
   useEffect(() => {
     if (data !== undefined) {
       const [boards] = data;
@@ -77,7 +78,10 @@ export default function BoardTasks() {
               })}
               {/* If the number of columns of tasks is less than 7, display an option to add more columns */}
               {columns.length < 7 ? (
-                <div className="rounded-md bg-white w-[17.5rem] mt-12 shrink-0 flex justify-center items-center">
+                <div
+                  className="rounded-md bg-white w-[17.5rem] mt-12 shrink-0 flex justify-center items-center"
+                  onClick={() => dispatch(openAddAndEditBoardModal("Edit Board"))}
+                >
                   <p className="cursor-pointer font-bold text-black text-2xl">+ New Column</p>
                 </div>
               ) : (
@@ -90,7 +94,10 @@ export default function BoardTasks() {
                 <p className="text-black text-sm">
                   This board is empty. Create a new column to get started.
                 </p>
-                <button className="bg-blue-500 text-black px-4 py-2 flex mt-6 rounded-3xl items-center space-x-2">
+                <button
+                  className="bg-blue-500 text-black px-4 py-2 flex mt-6 rounded-3xl items-center space-x-2"
+                  onClick={() => dispatch(openAddAndEditBoardModal("Edit Board"))}
+                >
                   <p>+ Add New Column</p>
                 </button>
               </div>

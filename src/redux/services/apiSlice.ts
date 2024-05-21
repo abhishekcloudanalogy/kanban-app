@@ -1,6 +1,6 @@
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import { getSession } from "next-auth/react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "@app/utils/firebaseConfig";
 
 // Create the Firestore API using createApi
@@ -28,8 +28,29 @@ export const fireStoreApi = createApi({
       },
       providesTags: ["Tasks"], // Specifies tags for caching
     }),
+    // endpoint for CRUD actions
+    updateBoardToDb: builder.mutation({
+      async queryFn(boardData) {
+        try {
+          const session = await getSession();
+          if (session?.user) {
+            const { user } = session;
+            const ref = collection(db, `users/${user?.email}/tasks`);
+            const querySnapshot = await getDocs(ref);
+            const boardId = querySnapshot.docs.map((doc) => doc.id);
+            await updateDoc(doc(db, `users/${user.email}/tasks/${boardId}`), {
+              boards: boardData,
+            });
+          }
+          return { data: null };
+        } catch (error) {
+          return { error: error };
+        }
+      },
+      invalidatesTags: ["Tasks"], // Specifies tags for invalidation
+    }),
   }),
 });
 
 // Export hooks for using the created endpoint
-export const { useFetchDataFromDbQuery } = fireStoreApi;
+export const { useFetchDataFromDbQuery, useUpdateBoardToDbMutation } = fireStoreApi;

@@ -6,7 +6,11 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { useFetchDataFromDbQuery } from "../../redux/services/apiSlice";
-import { getCurrentBoardName, setCurrentBoardName } from "../../redux/features/appSlice";
+import {
+  getCurrentBoardName,
+  openAddAndEditBoardModal,
+  setCurrentBoardName,
+} from "../../redux/features/appSlice";
 
 export default function Navbar({ session }) {
   const [show, setShow] = useState<boolean>(false);
@@ -30,7 +34,10 @@ export default function Navbar({ session }) {
         <p className="text-black text-2xl font-bold pl-6">{currentBoardName}</p>
 
         <div className="flex items-center space-x-3">
-          <button className="bg-blue-500 text-black px-4 py-2 flex rounded-3xl items-center space-x-2">
+          <button
+            className="bg-blue-500 text-black px-4 py-2 flex rounded-3xl items-center space-x-2"
+            onClick={() => dispatch(openAddAndEditBoardModal("Edit Board"))}
+          >
             <p>+ Add New Task</p>
           </button>
           <div className="flex items-center gap-3">
