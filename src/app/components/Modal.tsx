@@ -9,6 +9,7 @@ interface ModalProps {
 ReactModal.setAppElement("*");
 
 export function Modal({ children, isOpen, onRequestClose }: ModalProps) {
+  //  styling for the modal
   const modalStyle = {
     overlay: {
       zIndex: "900000",
@@ -33,7 +34,13 @@ export function Modal({ children, isOpen, onRequestClose }: ModalProps) {
   };
 
   return (
-    <ReactModal onRequestClose={onRequestClose} isOpen={isOpen} style={modalStyle}>
+    <ReactModal
+      // this opens the modal if isOpen value evaluates to true
+      isOpen={isOpen}
+      //   function to close the modal
+      onRequestClose={onRequestClose}
+      style={modalStyle}
+    >
       {children}
     </ReactModal>
   );

@@ -7,6 +7,8 @@ import { useCallback, useEffect, useState } from "react";
 import { getSession, SessionProvider } from "next-auth/react";
 import { data } from "./utils/data";
 import AddAndEditBoardModal from "@components/AddAndEditBoardModal";
+import AddAndEditTaskModal from "@components/AddAndEditTaskModal";
+import DeleteBoardOrTaskModal from "@components/DeleteBoardAndTaskModal";
 
 export default function Home() {
   const [userDetails, setUserDetails] = useState<{ [key: string]: any }>();
@@ -48,6 +50,8 @@ export default function Home() {
         <Sidebar />
         <BoardTasks />
         <AddAndEditBoardModal />
+        <AddAndEditTaskModal />
+        <DeleteBoardOrTaskModal />
       </main>
     </>
   );

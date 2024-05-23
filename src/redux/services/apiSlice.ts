@@ -1,53 +1,54 @@
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 import { getSession } from "next-auth/react";
-import { collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
+// additionally import the doc and updateDoc method from firestore
+import { collection, doc, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "@app/utils/firebaseConfig";
 
-// Create the Firestore API using createApi
 export const fireStoreApi = createApi({
-  reducerPath: "firestoreApi", // Specifies the path for the reducer
-  baseQuery: fakeBaseQuery(), // Utilizes fakeBaseQuery because Firebase has no traditional REST API endpoint
-  tagTypes: ["Tasks"], // Defines tag types for caching purposes
+  reducerPath: "firestoreApi",
+  baseQuery: fakeBaseQuery(),
+  tagTypes: ["Tasks"],
   endpoints: (builder) => ({
     fetchDataFromDb: builder.query<{ [key: string]: any }[], void>({
-      // Utilizes builder.query for making requests; builder.mutation can be used for CRUD operations
       async queryFn() {
-        // Employs queryFn since we are not fetching data from a conventional API;
-        // This allows us to include arbitrary code, as long as we return our data in the { data: results } format
-
         try {
           const session = await getSession();
           const { user } = session!;
           const ref = collection(db, `users/${user?.email}/tasks`);
           const querySnapshot = await getDocs(ref);
-          return { data: querySnapshot.docs.map((doc) => doc.data()) };
-          // Data must be returned in this format when using queryFn
-        } catch (e) {
-          return { error: e };
+          const boards = querySnapshot.docs.map((doc) => {
+            return doc.data();
+          });
+          return { data: boards };
+        } catch (e: any) {
+          return { error: e.message };
         }
       },
-      providesTags: ["Tasks"], // Specifies tags for caching
+      providesTags: ["Tasks"],
     }),
     // endpoint for CRUD actions
     updateBoardToDb: builder.mutation({
-      async queryFn(boardData) {
+      async queryFn(arg) {
         try {
           const session = await getSession();
           if (session?.user) {
             const { user } = session;
-            const ref = collection(db, `users/${user?.email}/tasks`);
+            const ref = collection(db, `users/${user.email}/tasks`);
             const querySnapshot = await getDocs(ref);
-            const boardId = querySnapshot.docs.map((doc) => doc.id);
+            const boardId = querySnapshot.docs.map((doc) => {
+              return doc.id;
+            });
             await updateDoc(doc(db, `users/${user.email}/tasks/${boardId}`), {
-              boards: boardData,
+              boards: arg,
             });
           }
-          return { data: null };
-        } catch (error) {
-          return { error: error };
+          return Promise.resolve({ data: null });
+        } catch (e) {
+          return Promise.reject({ error: e });
         }
       },
-      invalidatesTags: ["Tasks"], // Specifies tags for invalidation
+      invalidatesTags: ["Tasks"], // this will be used to invalidate the initially fetched data.
+      // Data will have to be refetched once this enpoint has been called
     }),
   }),
 });

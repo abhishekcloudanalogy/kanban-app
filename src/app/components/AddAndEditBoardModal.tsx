@@ -1,17 +1,19 @@
+import { useState, useEffect } from "react";
+import { Modal, ModalBody } from "./Modal";
+import { useAppSelector, useAppDispatch } from "../../redux/hooks";
+//import needed functions from the appSlice
 import {
-  closeAddAndEditBoardModal,
   getAddAndEditBoardModalValue,
   getAddAndEditBoardModalVariantValue,
+  closeAddAndEditBoardModal,
   getCurrentBoardName,
 } from "../../redux/features/appSlice";
-import { useAppDispatch, useAppSelector } from "../../redux/hooks";
-import { Modal, ModalBody } from "./Modal";
+import { useFetchDataFromDbQuery, useUpdateBoardToDbMutation } from "../../redux/services/apiSlice";
 import { FaTimes } from "react-icons/fa";
 import { id } from "../utils/data";
-import { useEffect, useState } from "react";
-import { useUpdateBoardToDbMutation, useFetchDataFromDbQuery } from "../../redux/services/apiSlice";
-// define types for boarddata
-interface IBoardData {
+
+// define types for board data
+interface IAddBoardData {
   id: string;
   name: string;
   columns: {
@@ -20,6 +22,7 @@ interface IBoardData {
     columns?: { name: string; tasks?: { [key: string]: any }[] };
   }[];
 }
+
 // dummy add board data for the "Add board" modal
 let addBoardData = {
   id: id(),
@@ -34,42 +37,50 @@ let addBoardData = {
 };
 
 export default function AddAndEditBoardModal() {
-  const [boardData, setBoardData] = useState<IBoardData>();
-  const [isBoardNameEdit, setIsBoardNameEmpty] = useState<boolean>(false);
+  //manage the board data state
+  const [boardData, setBoardData] = useState<IAddBoardData>();
+  // check if the board name field is empty
+  const [isBoardNameEmpty, setIsBoardNameEmpty] = useState<boolean>(false);
+  // will be used to check if any of the board column field is empty
   const [emptyColumnIndex, setEmptyColumnIndex] = useState<number>();
+
+  // get the variant of the modal
   const modalVariant = useAppSelector(getAddAndEditBoardModalVariantValue);
-  const closeMoadl = () => dispatch(closeAddAndEditBoardModal());
+  // check the type of the open modal, whether Add new board, or Edit board
   const isVariantAdd = modalVariant === "Add New Board";
-
   const dispatch = useAppDispatch();
+  // opens that modal is isOpen evaluates to true
   const isOpen = useAppSelector(getAddAndEditBoardModalValue);
-  const currentBoardName = useAppSelector(getCurrentBoardName);
-
+  const currentBoardTitle = useAppSelector(getCurrentBoardName);
+  // close the modal
+  const closeModal = () => dispatch(closeAddAndEditBoardModal());
+  // Fetch data from the database to populate the edit board modal
   let { data } = useFetchDataFromDbQuery();
+  // Mutation hook for updating the board in the database
   const [updateBoardToDb, { isLoading }] = useUpdateBoardToDbMutation();
 
+  // Effect to set initial data for the modal based on the variant
   useEffect(() => {
     if (data) {
       if (isVariantAdd) {
         setBoardData(addBoardData);
       } else {
-        const activeBoard = data[0].boards.find(
-          (board: { name: string }) => board.name === currentBoardName
+        const activeBoard = data[0]?.boards.find(
+          (board: { name: string }) => board.name === currentBoardTitle
         );
         setBoardData(activeBoard);
       }
     }
-  }, [currentBoardName, data, isVariantAdd]);
+  }, [currentBoardTitle, data, isVariantAdd, modalVariant]);
 
+  // Effect to clear error messages after a certain time
   useEffect(() => {
-    const tiemoutId = setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       setIsBoardNameEmpty(false);
       setEmptyColumnIndex(undefined);
     }, 3000);
-    return () => {
-      clearTimeout(tiemoutId);
-    };
-  }, [emptyColumnIndex, emptyColumnIndex]);
+    return () => clearTimeout(timeoutId);
+  }, [emptyColumnIndex, isBoardNameEmpty]);
 
   // Handler for board name change
   const handleBoardNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -149,6 +160,7 @@ export default function AddAndEditBoardModal() {
         updateBoardToDb(boards);
       }
     }
+    dispatch(closeAddAndEditBoardModal());
   };
 
   // Handler for editing a board in the database
@@ -181,12 +193,101 @@ export default function AddAndEditBoardModal() {
         updateBoardToDb(boardsCopy);
       }
     }
+    dispatch(closeAddAndEditBoardModal());
   };
 
   return (
-    <Modal isOpen={isOpen} onRequestClose={closeMoadl}>
+    <Modal isOpen={isOpen} onRequestClose={closeModal}>
       <ModalBody>
-        <p>{modalVariant}</p>
+        {boardData && (
+          <>
+            {/* display the variant(title) of the modal */}
+            <p className="text-lg font-bold">{modalVariant}</p>
+            <div className="py-6">
+              <div>
+                <label htmlFor="boardName" className="text-sm">
+                  Board Name
+                </label>
+                <div className="pt-2">
+                  <input
+                    id="boardName"
+                    className={`${
+                      isBoardNameEmpty ? "border-red-500" : "border-stone-200"
+                    } border w-full p-2 rounded text-sm cursor-pointer focus:outline-none`}
+                    placeholder="Name"
+                    value={boardData.name}
+                    onChange={handleBoardNameChange}
+                  />
+                </div>
+                {/* display this error if the board name is empty */}
+                {isBoardNameEmpty ? (
+                  <p className="text-xs text-red-500">Board name cannot be empty</p>
+                ) : (
+                  ""
+                )}
+              </div>
+
+              <div className="mt-6">
+                <label htmlFor="" className="text-sm">
+                  Board Column
+                </label>
+                {boardData &&
+                  boardData.columns.map((column: { name: string; id: string }, index: number) => {
+                    let { name, id } = column;
+                    return (
+                      <div key={id} className="pt-2">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            className={`${
+                              emptyColumnIndex === index ? "border-red-500" : "border-stone-200"
+                            } border border-stone-200 focus:outline-none text-sm cursor-pointer w-full p-2 rounded`}
+                            placeholder="e.g Doing"
+                            onChange={(e) => handleColumnNameChange(index)(e)}
+                            value={name!}
+                          />
+                          <div>
+                            <FaTimes onClick={() => handleDeleteColumn(index)} />
+                          </div>
+                        </div>
+                        {/* display this error if the board name is empty */}
+                        {emptyColumnIndex === index ? (
+                          <p className="text-xs text-red-500">Column name cannot be empty</p>
+                        ) : (
+                          ""
+                        )}
+                      </div>
+                    );
+                  })}
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={handleAddNewColumn}
+                    className="bg-stone-200 rounded-3xl py-2 w-full text-sm font-bold"
+                  >
+                    <p>+ Add New Column</p>
+                  </button>
+                </div>
+              </div>
+              <div className="pt-6">
+                <button
+                  type="submit"
+                  onClick={(e: React.FormEvent<HTMLButtonElement>) => {
+                    // function to run depending on the variant of the modals
+                    isVariantAdd ? handleAddNewBoardToDb(e) : handleEditBoardToDb(e);
+                  }}
+                  className="bg-blue-500 rounded-3xl py-2 w-full text-sm font-bold"
+                >
+                  {/* text to display depending on the variant of the modal */}
+                  <p>
+                    {isLoading
+                      ? "Loading"
+                      : `${isVariantAdd ? "Create New Board" : "Save Changes"}`}
+                  </p>
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </ModalBody>
     </Modal>
   );
